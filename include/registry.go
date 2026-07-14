@@ -94,6 +94,7 @@ func OutboundRegistry() *outbound.Registry {
 
 	registerQUICOutbounds(registry)
 	registerWireGuardOutbound(registry)
+	registerOpenVPNOutbound(registry)
 	registerStubForRemovedOutbounds(registry)
 
 	return registry
