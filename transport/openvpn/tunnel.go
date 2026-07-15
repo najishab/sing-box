@@ -275,7 +275,7 @@ func (t *Tunnel) getClient() (*Client, error) {
 	timer := time.NewTimer(0)
 	defer timer.Stop()
 	for {
-		t.logger.NoticeContext(t.ctx, "connecting to OpenVPN server")
+		t.logger.InfoContext(t.ctx, "connecting to OpenVPN server")
 		client, err := t.connect()
 		if err != nil {
 			t.logger.ErrorContext(t.ctx, fmt.Errorf("connect failed: %v", err))
@@ -288,7 +288,7 @@ func (t *Tunnel) getClient() (*Client, error) {
 			continue
 		}
 		t.client = client
-		t.logger.NoticeContext(t.ctx, "connected to OpenVPN server")
+		t.logger.InfoContext(t.ctx, "connected to OpenVPN server")
 		return client, nil
 	}
 }

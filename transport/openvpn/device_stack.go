@@ -51,7 +51,7 @@ func newStackDevice(options DeviceOptions) (*stackDevice, error) {
 		packetOutbound: make(chan *buf.Buffer, 256),
 		done:           make(chan struct{}),
 	}
-	ipStack, err := tun.NewGVisorStackWithOptions((*wireEndpoint)(tunDevice), stack.NICOptions{}, true)
+	ipStack, err := tun.NewGVisorStackWithOptions((*wireEndpoint)(tunDevice), stack.NICOptions{})
 	if err != nil {
 		return nil, err
 	}

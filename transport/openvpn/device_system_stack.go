@@ -35,7 +35,7 @@ func newSystemStackDevice(options DeviceOptions) (*systemStackDevice, error) {
 		mtu:  options.MTU,
 		done: make(chan struct{}),
 	}
-	ipStack, err := tun.NewGVisorStackWithOptions(endpoint, stack.NICOptions{}, true)
+	ipStack, err := tun.NewGVisorStackWithOptions(endpoint, stack.NICOptions{})
 	if err != nil {
 		return nil, err
 	}
