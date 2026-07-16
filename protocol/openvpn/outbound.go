@@ -38,6 +38,8 @@ type Outbound struct {
 }
 
 func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.OpenVPNOutboundOptions) (adapter.Outbound, error) {
+	options.UDPFragmentDefault = true
+	
 	tlsConfig, err := tls.NewOpenVPNClient(ctx, logger, common.PtrValueOrDefault(options.TLS))
 	if err != nil {
 		return nil, err
