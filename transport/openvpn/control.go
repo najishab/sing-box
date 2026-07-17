@@ -190,6 +190,45 @@ func (c *ControlChannel) Read(ctx context.Context) (*ControlPacket, error) {
 	}
 }
 
+func (c *ControlChannel) ReadDeadline() time.Time {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.readDeadline
+}
+
+// ReadWithRetransmit is like Read, but if no packet arrives within a short
+// interval, it retransmits any unacknowledged sent packets and tries again,
+// until the channel's overall read deadline (set via SetDeadline /
+// SetReadDeadline) is reached. Read alone never retransmits, which is fine
+// for reliable transports once the connection is up, but is not sufficient
+// for the TLS handshake phase carried over the control channel: a single
+// dropped packet would otherwise stall until the whole handshake timeout
+// expires instead of being retried.
+func (c *ControlChannel) ReadWithRetransmit(ctx context.Context) (*ControlPacket, error) {
+	for {
+		attemptCtx, cancel := context.WithTimeout(ctx, controlRetransmitDelay)
+		packet, err := c.Read(attemptCtx)
+		cancel()
+		if err == nil {
+			return packet, nil
+		}
+		if !errors.Is(err, context.DeadlineExceeded) {
+			return nil, err
+		}
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		if deadline := c.ReadDeadline(); !deadline.IsZero() && !time.Now().Before(deadline) {
+			return nil, context.DeadlineExceeded
+		}
+		if c.PendingMessages() > 0 {
+			if rerr := c.RetransmitPending(ctx); rerr != nil {
+				return nil, rerr
+			}
+		}
+	}
+}
+
 func (c *ControlChannel) PendingMessages() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -316,7 +355,7 @@ func (c *ControlConn) Read(b []byte) (int, error) {
 	}
 	c.mu.Unlock()
 	for {
-		packet, err := c.channel.Read(context.Background())
+		packet, err := c.channel.ReadWithRetransmit(context.Background())
 		if err != nil {
 			return 0, err
 		}
